@@ -1,0 +1,6 @@
+model_id: amazon/chronos-2
+embed_column: amazon_chronos-2
+batch_size: 64
+series_col: series
+mask_col: mask
+skip_if_column_present: true

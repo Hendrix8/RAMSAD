@@ -1,0 +1,8 @@
+split: id
+
+train_segments: ${paths.data_root}/id/train_segments.parquet
+test_segments: ${paths.data_root}/id/test_segments.parquet
+train_series: ${paths.data_root}/id/train_series.parquet
+test_series: ${paths.data_root}/id/test_series.parquet
+train_perf: ${paths.data_root}/../raw/VUS/train.csv
+test_perf: ${paths.data_root}/../raw/VUS/test.csv

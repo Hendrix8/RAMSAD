@@ -1,0 +1,9 @@
+split: ood
+ood_domain: sensor
+
+train_segments: ${paths.data_root}/ood/OOD_${data.ood_domain}/train_segments_OOD_${data.ood_domain}.parquet
+test_segments: ${paths.data_root}/ood/OOD_${data.ood_domain}/test_segments_OOD_${data.ood_domain}.parquet
+train_series: ${paths.data_root}/ood/OOD_${data.ood_domain}/train_series_OOD_${data.ood_domain}.parquet
+test_series: ${paths.data_root}/ood/OOD_${data.ood_domain}/test_series_OOD_${data.ood_domain}.parquet
+train_perf: ${paths.data_root}/ood/Datasets/OOD/train_perf_OOD_${data.ood_domain}.csv
+test_perf: ${paths.data_root}/ood/Datasets/OOD/test_perf_OOD_${data.ood_domain}.csv

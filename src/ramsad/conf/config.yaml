@@ -1,0 +1,19 @@
+defaults:
+  - paths: default
+  - data: ood
+  - embed: chronos2
+  - embed_desc: default
+  - retrieve: cosine_chronos
+  - select: mean_vus
+  - pipeline: full
+  - experiment: noop
+  - _self_
+
+seed: 42
+cuda_device: 0
+
+hydra:
+  run:
+    dir: ${paths.outputs_root}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: true

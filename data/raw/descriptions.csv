@@ -1,0 +1,24 @@
+source,description
+CATSv2,"The second version of the Controlled Anomalies Time Series dataset, with commands, external stimuli, and telemetry from a simulated complex dynamical system containing 200 injected anomalies."
+Daphnet,Annotated readings from three acceleration sensors (hip and leg) on Parkinson’s patients experiencing freezing of gait (FoG) during walking tasks.
+Exathlon,Based on real traces from a Spark cluster over 2.5 months; includes ground-truth labels for both root-cause and effect intervals of anomalies.
+IOPS,"A dataset of performance indicators reflecting web service scale and quality, as well as machine health status."
+LTDB,A collection of seven long-duration ECG recordings (14–22 hours each) with manually reviewed beat annotations.
+MGAB,Mackey-Glass time series where anomalies show chaotic behavior that is difficult to distinguish visually.
+MITDB,Contains 48 half-hour excerpts of two-channel ambulatory ECG recordings from 47 subjects studied by the BIH Arrhythmia Laboratory (1975–1979).
+MSL,Collected from the Curiosity Rover mission on Mars.
+NAB,"Labeled real-world and artificial time series, including AWS server metrics, online ad click rates, real-time traffic data, and Twitter mentions of publicly traded companies."
+NEK,Collected from real production network equipment.
+OPPORTUNITY,
+Power,Power consumption data for a Dutch research facility over the full year of 1997.
+SED,"Simulated engine disk data from the NASA Rotary Dynamics Laboratory, representing disk revolutions across several runs at 3K rpm."
+SMAP,Real spacecraft telemetry with anomalies from the Soil Moisture Active Passive satellite; each series includes one sensor measurement feature and binary-encoded command features.
+SMD,"A 5-week dataset from a large Internet company, containing three groups of entities from 28 different machines."
+SVDB,Includes 78 half-hour ECG recordings selected to supplement supraventricular arrhythmia examples in the MIT-BIH Arrhythmia Database.
+SWaT,A secure water treatment dataset collected from 51 sensors and actuators; anomalies represent abnormal behavior under attack scenarios.
+Stock,A stock trading traces dataset with one million transaction records collected during one trading day.
+TAO,
+TODS,"A synthetic dataset including global, contextual, shapelet, seasonal, and trend anomalies."
+UCR,"A collection of univariate time series across multiple domains (e.g., air temperature, arterial blood pressure, astronomy, ECG), where most anomalies are artificially introduced."
+WSD,A web service dataset containing real-world KPIs collected from large Internet companies.
+YAHOO,A Yahoo Labs dataset containing both real and synthetic time series based on production traffic to Yahoo systems.

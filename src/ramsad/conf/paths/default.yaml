@@ -1,0 +1,4 @@
+# All relative paths resolve from the process working directory where you launch a command
+# (unless you set the env vars to absolute locations).
+data_root: ${oc.env:RAMSAD_DATA_ROOT,./data/splits}
+outputs_root: ${oc.env:RAMSAD_OUTPUTS_ROOT,./outputs}

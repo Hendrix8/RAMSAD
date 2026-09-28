@@ -1,0 +1,52 @@
+# Data configuration
+
+# desc_emb_col: combo_desc_embeddings
+
+
+
+# ID bundle (paths relative to cwd when you run `python alignment/train.py`).
+# Bundled ramsad `id/train_segments.parquet` has MPNet **class** embeddings (`all-mpnet-base-v2_class`).
+# For **description** embeddings (`all-mpnet-base-v2_desc`), run `ramsad-embed-desc` (or `pipeline.embed_desc=true`) first, then set `data.desc_emb_col=all-mpnet-base-v2_desc` for alignment.
+parquet_file: ${oc.env:RAMSAD_DATA_ROOT,data/processed_data}/id/train_segments.parquet
+ts_emb_col: amazon_chronos-2
+# ts_emb_col: emb_tirex
+# ts_emb_col: emb_timesfm
+# ts_emb_col: emb_mantis
+# ts_emb_col: emb_flowstate
+# ts_emb_col: emb_toto
+# ts_emb_col: emb_moment
+# ts_emb_col: emb_moirai 
+
+desc_emb_col: all-mpnet-base-v2_class
+desc_text_col: desc # Column for description text (for stratification/duplicate detection). Use null if not present.
+label_col: label # Column indicating whether the segment is anomalous
+
+
+# Column for series identifier (e.g. dataset_name). Required when model.per_series_loss is true.
+# When set, used to exclude same-series segments from loss comparison.
+series_col: dataset_name
+
+# Column used to stratify the validation set uniformly.
+# The validation split will take uniform samples per unique value of this column.
+# If null, falls back to desc_text_col.
+strat_val_col: desc
+
+# CSV file containing VUS-PR performance per model for Series-to-Performance alignment
+performance_file: data/raw/VUS/train.csv
+
+# Optional: paths for id_eval_pipeline (retrieval + model selection + evaluate).
+# Saved in each run's config.yaml so evaluation reuses the same data as training.
+# train_segments_parquet: null means "use data.parquet_file" (training segments).
+# perf_*_csv: null means id_eval falls back to run_&_evaluate/test.csv and train.csv.
+retrieval_eval:
+  train_segments_parquet: null
+  test_segments_parquet: ${oc.env:RAMSAD_DATA_ROOT,data/processed_data}/id/test_segments.parquet
+  train_series_parquet: ${oc.env:RAMSAD_DATA_ROOT,data/processed_data}/id/train_series.parquet
+  test_series_parquet: ${oc.env:RAMSAD_DATA_ROOT,data/processed_data}/id/test_series.parquet
+  perf_test_csv: null
+  perf_train_csv: null
+
+
+
+# use_fast_load: use PyArrow + vectorized conversion (much faster for large parquets)
+use_fast_load: true

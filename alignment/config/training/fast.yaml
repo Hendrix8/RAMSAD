@@ -1,0 +1,28 @@
+# Fast training configuration (fewer epochs, larger batch)
+
+batch_size: 512
+learning_rate: 1.0e-4
+num_epochs: 50
+warmup_epochs: 5
+grad_clip_norm: 1.0
+num_workers: 4
+
+optimizer:
+  name: AdamW
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.999]
+
+scheduler:
+  name: warmup_cosine  # Options: warmup_cosine, cosine, step, exponential, plateau, constant
+
+train_val_split: 0.8
+random_seed: 42
+
+# Optional: print/save validation samples per description (group) after splitting
+print_val_samples_per_desc: false
+
+# Optional: fixed number of validation samples per dataset/description.
+# If 0, use train_val_split (fractional split per description).
+# If >0, ignore train_val_split and take up to this many validation samples
+# from each dataset/description.
+val_samples_per_dataset: 0

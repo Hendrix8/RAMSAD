@@ -1,0 +1,61 @@
+# Main configuration file for embedding alignment model
+
+defaults:
+  - model: default
+  - training: default
+  - data: default
+  - _self_
+
+# Experiment name
+name: embedding_alignment
+
+# Resolved to absolute paths in train.py (cwd when you launch). Override via RAMSAD_OUTPUTS_ROOT.
+output_dir: ${oc.env:RAMSAD_OUTPUTS_ROOT,./outputs}/alignment
+checkpoint_dir: ${output_dir}/checkpoints
+plots_dir: ${output_dir}/plots
+
+# Visualization settings
+visualization:
+  plot_training: true
+  plot_tsne: false
+  plot_retrieval: false
+  # Two datasets × 2 series + description-only points; PCA/UMAP 2D pre vs post alignment
+  plot_two_dataset_alignment: true
+  # pca | umap (UMAP only used when enough points; small n falls back to PCA)
+  two_dataset_reduction: pca
+  show_train_progress: false
+
+# wandb logging settings
+wandb:
+  enabled: false  # enable for cloud logging
+  entity: null  # Team/organization name (leave null for personal account)
+  project: embedding-alignment  # wandb project name
+  tags: []  # Optional tags for the run (e.g., ["baseline", "experiment-1"])
+
+# Random seed
+seed: 42
+
+# Device
+device: cuda
+cuda_device: 0
+
+# GPU parallelization options
+parallelization:
+  # Use multiple GPUs (DataParallel for simple case, or set to "ddp" for DistributedDataParallel)
+  # Options: "none", "dp" (DataParallel), "ddp" (DistributedDataParallel)
+  multi_gpu: none  # Set to "dp" to use all available GPUs, or "ddp" for distributed training
+  
+  # Enable torch.compile for faster execution (PyTorch 2.0+)
+  # Requires PyTorch 2.0+ and can speed up training significantly
+  torch_compile: true
+  
+  # Mixed precision training (AMP) - faster training and lower memory usage
+  # Options: "none", "fp16", "bf16"
+  # fp16: Use half precision (good for most GPUs)
+  # bf16: Use bfloat16 (better for A100, H100 - native support, no loss scaling)
+  mixed_precision: bf16
+  
+  # Enable TF32 for faster training on Ampere+ GPUs (A100, RTX 30xx+)
+  # Automatically enabled if supported, this flag allows disabling it
+  enable_tf32: true
+

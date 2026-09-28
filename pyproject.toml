@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ramsad"
+version = "0.1.0"
+description = "Reproducible RAG model selection: Chronos-2 embeddings, cosine retrieval, mean-VUS argmax (ID/OOD)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "hydra-core>=1.3.0,<2",
+    "numpy>=1.21,<3",
+    "pandas>=2.0,<3",
+    "pyarrow>=14.0",
+    "torch>=2.0,<3",
+    "tqdm>=4.66",
+    "chronos-forecasting>=1.0",
+    "omegaconf>=2.3",
+]
+
+# NVIDIA GPU: PyTorch CUDA wheels are on PyTorch's index, not PyPI. Either:
+#   pip install -e ".[cuda124]" --extra-index-url https://download.pytorch.org/whl/cu124
+# or pick cu121/cu126/cu128 from https://pytorch.org/get-started/locally/ and match the URL.
+[project.optional-dependencies]
+cuda124 = [
+    "torch>=2.4.0,<3",
+]
+dev = ["pytest>=7.0", "ruff>=0.4", "sentence-transformers>=2.2,<4"]
+desc = ["sentence-transformers>=2.2,<4"]
+alignment = [
+    "matplotlib>=3.6",
+    "seaborn>=0.12",
+    "scikit-learn>=1.2",
+    "rich>=13.0",
+    "sentence-transformers>=2.2,<4",
+]
+
+[project.scripts]
+ramsad-embed = "ramsad.run_embed:main"
+ramsad-retrieve = "ramsad.run_retrieve:main"
+ramsad-select = "ramsad.run_select:main"
+ramsad-pipeline = "ramsad.run_pipeline:main"
+ramsad-embed-desc = "ramsad.run_embed_desc:main"
+ramsad-train-alignment = "ramsad.launch_train_alignment:main"
+generate_segments = "ramsad.generate_segments:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ramsad = ["conf/**/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

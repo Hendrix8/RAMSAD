@@ -1,0 +1,15 @@
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+outputs/
+multirun/
+*.egg-info/
+dist/
+build/
+.DS_Store
+data/processed_data/
+tests/id/
+tests/ood/

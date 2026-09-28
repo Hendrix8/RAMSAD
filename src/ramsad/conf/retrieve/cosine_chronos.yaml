@@ -1,0 +1,14 @@
+top_k: 10
+batch_size: 2048
+aggregation_strategy: frequency_penalty
+seg_pos_col: seg_pos
+output_csv_name: retrieval_topk.csv
+embed_column: ${embed.embed_column}
+# chronos: cosine on Chronos column / embed_column. alignment: project then cosine on alignment_emb_column.
+# Paths resolve from cwd (see paths.outputs_root); override with RAMSAD_OUTPUTS_ROOT if needed.
+mode: chronos
+alignment_run_dir: ${paths.outputs_root}/alignment
+alignment_emb_column: emb_aligned
+alignment_source_column: auto
+alignment_device: cuda
+skip_alignment_if_present: true

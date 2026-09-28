@@ -1,0 +1,29 @@
+# Large model configuration (extends default - only overrides projection_dim)
+
+ts_emb_dim: 768
+desc_emb_dim: 768
+projection_dim: 512  # Larger projection dimension
+temperature: 0.1
+
+
+# Loss function: "contrastive", "distance", "cosine", or "multi_positive"
+# - contrastive: Uses InfoNCE contrastive loss with similarity matrix
+# - distance: Simple distance loss that minimizes distance between matching pairs
+# - cosine: Cosine similarity loss that maximizes cosine similarity between matching pairs
+# - multi_positive: Multi-positive contrastive loss that handles multiple positive pairs per anchor (good for duplicate descriptions)
+loss_function: cosine
+
+# Description matching mode (for contrastive and multi_positive loss when descriptions are provided)
+# - exact: match if descriptions are exactly equal (string match)
+# - embedding_similarity: match if cosine similarity of raw desc embeddings (768-dim) >= desc_similarity_threshold
+desc_match_mode: embedding_similarity
+desc_similarity_threshold: 0.95  # only used when desc_match_mode is embedding_similarity
+
+# When true, only compare with segments from different series (exclude same series from loss).
+# Requires data.series_col to be set (e.g. dataset_name).
+per_series_loss: true
+
+# Performance Alignment Options
+align_to_performance: false
+performance_dim: 32
+align_anomalies_only: true

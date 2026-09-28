@@ -1,0 +1,13 @@
+k: 6
+# Number of detectors to select (N). N=1 is single-detector selection; N>1 lists the
+# top-N detectors by neighbor mean VUS in the selected_models column (';'-separated).
+n: 1
+perf_file_column: file
+valid_vus_threshold: -0.5
+start_id: 1
+end_id: 870
+output_csv_name: model_selection.csv
+# If set, use this retrieval CSV (for k-sweeps sharing one retrieval_topk.csv).
+retrieval_csv: null
+model_allowlist: null
+verbose: true

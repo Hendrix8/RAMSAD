@@ -1,0 +1,13 @@
+defaults:
+  - paths: default
+  - data: id
+  - embed_desc: default
+  - _self_
+
+# Standalone entry (`ramsad-embed-desc`). Override data: `data=ood data.ood_domain=sensor`, etc.
+
+hydra:
+  run:
+    dir: ${paths.outputs_root}/${now:%Y-%m-%d}/${now:%H-%M-%S}-embed-desc
+  job:
+    chdir: true

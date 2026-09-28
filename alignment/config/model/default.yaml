@@ -1,0 +1,36 @@
+# Model configuration
+
+ts_emb_dim: 768  # Chronos T5 base embedding dimension
+desc_emb_dim: 768  # MPNet embedding dimension
+projection_dim: 768  # Aligned (shared) projection dimension; override with Hydra if needed
+temperature: 0.1  # Temperature for contrastive loss
+
+# Loss function: "contrastive", "distance", "cosine", or "multi_positive"
+# - contrastive: Uses InfoNCE contrastive loss with similarity matrix
+# - distance: Simple distance loss that minimizes distance between matching pairs
+# - cosine: Cosine similarity loss that maximizes cosine similarity between matching pairs
+# - multi_positive: Multi-positive contrastive loss that handles multiple positive pairs per anchor (good for duplicate descriptions)
+loss_function: multi_positive
+
+# Description matching mode (for contrastive and multi_positive loss when descriptions are provided)
+# - exact: match if descriptions are exactly equal (string match)
+# - embedding_similarity: match if cosine similarity of raw desc embeddings (768-dim) >= desc_similarity_threshold
+desc_match_mode: embedding_similarity
+desc_similarity_threshold: 0.95  # only used when desc_match_mode is embedding_similarity
+
+# When true, only compare with segments from different series (exclude same series from loss).
+# Requires data.series_col to be set (e.g. dataset_name).
+per_series_loss: true
+
+# Preserve temporal features settings
+# - preserve_temporal_identity: Adds MSE reconstruction penalty for TS embeddings
+# - identity_penalty_weight: Weight of the identity penalty in the loss (default: 1.0)
+# - series_level_alignment: Mean-pool segment TS embeddings belonging to the same series before alignment
+preserve_temporal_identity: false
+identity_penalty_weight: 1.0
+series_level_alignment: false
+
+# Performance Alignment Options
+align_to_performance: false
+performance_dim: 32
+align_anomalies_only: false

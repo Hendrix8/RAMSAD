@@ -1,0 +1,6 @@
+# @package _global_
+defaults:
+  - override /data: ood
+
+data:
+  ood_domain: sensor

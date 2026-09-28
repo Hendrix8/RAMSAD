@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - override /data: ood
+
+data:
+  ood_domain: sensor
+
+# Run all 9 OOD domains (bash), from repo root, after data is laid out under `data/splits/ood/`:
+#
+# for d in environment facility finance humanactivity medical sensor synthetic traffic webservice; do
+#   .venv/bin/python -m ramsad.run_pipeline "data.ood_domain=$d" "hydra.run.dir=\${paths.outputs_root}/ood_${d}/\${now:%Y-%m-%d}/\${now:%H-%M-%S}"
+# done
+#
+# Adjust `hydra.run.dir` if you prefer a flat layout.

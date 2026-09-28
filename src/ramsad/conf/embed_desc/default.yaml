@@ -1,0 +1,7 @@
+model_id: sentence-transformers/all-mpnet-base-v2
+text_column: desc
+out_column: all-mpnet-base-v2_desc
+batch_size: 64
+# auto | cpu | cuda — passed to SentenceTransformer; auto lets the library choose
+device: auto
+skip_if_column_present: true

@@ -1,0 +1,56 @@
+# Training configuration
+train_size: 100000 # number of samples to train on independent of the validation set
+# train_sampling_mode: how to sample train_size from the training set
+#   - "random": shuffle all train indices and take first train_size (may over-represent common descriptions)
+#   - "stratified_uniform": sample uniformly across descriptions - each description gets ~train_size/num_descriptions
+#     (ensures representation from all descriptions, good for imbalanced datasets)
+train_sampling_mode: stratified_uniform
+# Batch size: larger = more GPU memory, fewer batches.
+# 8192 gives more optimization steps/epoch than 16384 and usually improves convergence stability.
+batch_size: 8192
+learning_rate: 1.0e-5  # linear scaling from previous 2e-2 @ 16384
+num_epochs: 300
+warmup_epochs: 10
+grad_clip_norm: 1.0
+num_workers: 16
+
+# Optimizer settings
+optimizer:
+  name: AdamW
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.999]
+
+# Learning rate scheduler
+scheduler:
+  name: warmup_cosine  # Options: warmup_cosine, cosine, step, exponential, plateau, constant
+  # warmup_epochs is defined above (used for warmup_cosine)
+  
+  # Scheduler-specific parameters (only used for corresponding scheduler types)
+  # For cosine:
+  #   T_max: 100  # Maximum number of iterations
+  #   eta_min: 0.0  # Minimum learning rate
+  
+  # For step:
+  #   step_size: 30  # Period of learning rate decay
+  #   gamma: 0.1  # Multiplicative factor of learning rate decay
+  
+  # For exponential:
+  #   gamma: 0.95  # Multiplicative factor of learning rate decay
+  
+  # For plateau:
+  mode: min  # One of 'min' or 'max'
+  factor: 0.5  # Factor by which the learning rate will be reduced
+  patience: 10  # Number of epochs with no improvement after which learning rate will be reduced
+
+# Train/Val split
+train_val_split: 0.8
+random_seed: ${seed}
+
+# Optional: print/save validation samples per description (group) after splitting
+print_val_samples_per_desc: true
+
+# Optional: fixed number of validation samples per dataset/description.
+# If 0, use train_val_split (fractional split per description).
+# If >0, ignore train_val_split and take up to this many validation samples
+# from each dataset/description.
+val_samples_per_dataset: 0
