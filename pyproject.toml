@@ -29,6 +29,8 @@ cuda124 = [
 ]
 dev = ["pytest>=7.0", "ruff>=0.4", "sentence-transformers>=2.2,<4"]
 desc = ["sentence-transformers>=2.2,<4"]
+# Run detectors and compute VUS-PR for `ramsad-ensemble`.
+ensemble = ["TSB_AD @ git+https://github.com/TheDatumOrg/TSB-AD.git"]
 alignment = [
     "matplotlib>=3.6",
     "seaborn>=0.12",
@@ -42,6 +44,7 @@ ramsad-embed = "ramsad.run_embed:main"
 ramsad-retrieve = "ramsad.run_retrieve:main"
 ramsad-select = "ramsad.run_select:main"
 ramsad-pipeline = "ramsad.run_pipeline:main"
+ramsad-ensemble = "ramsad.run_ensemble:main"
 ramsad-embed-desc = "ramsad.run_embed_desc:main"
 ramsad-train-alignment = "ramsad.launch_train_alignment:main"
 generate_segments = "ramsad.generate_segments:main"

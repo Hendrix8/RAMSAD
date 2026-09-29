@@ -1,0 +1,11 @@
+# Config for `ramsad-ensemble` (score the top-N detectors chosen by `ramsad-select select.n=N`).
+defaults:
+  - paths: default
+  - ensemble: default
+  - _self_
+
+hydra:
+  run:
+    dir: ${paths.outputs_root}/ensemble/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: true

@@ -1,0 +1,18 @@
+# model_selection.csv written by `ramsad-select select.n=N` (uses its `selected_models` column).
+selection_csv: ???
+# Per-detector anomaly scores, TSB-AD layout: <scores_dir>/<Detector>/<series>.npy
+# (TSB-AD detector names, e.g. Sub_PCA, KMeansAD_U, MOMENT_FT).
+scores_dir: ${oc.env:RAMSAD_SCORES_DIR,./data/scores}
+# Where the raw TSB-AD series CSVs (value column(s) + Label) are looked up.
+series_dirs:
+  - ./data/raw/Test
+  - ./data/raw/Train
+# Compute missing detector scores with TSB-AD (pip install -e ".[ensemble]") and cache them in scores_dir.
+run_missing: false
+# Compute VUS-PR per series when the series has labels (needs TSB-AD).
+evaluate: true
+# Save each ensemble score to <run dir>/ensemble_scores/<series>.npy.
+save_scores: true
+# Rounding applied to the normalised scores and their average (paper runs: 3 for ID, 2 for OOD); null = none.
+round_decimals: 3
+verbose: true

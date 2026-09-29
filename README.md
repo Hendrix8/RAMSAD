@@ -34,13 +34,10 @@
 - [Why RAMSAD?](#why-ramsad)
 - [How it works](#how-it-works)
 - [Results](#results)
-- [Quick start](#quick-start)
+- [Quick start (one-button run)](#quick-start-one-button-run)
 - [Install](#install)
-- [Data](#data)
-- [Run (Hydra)](#run-hydra)
-- [Description embeddings](#description-embeddings-all-mpnet-base-v2_desc)
-- [Alignment retrieval paths](#alignment-retrieval-paths)
-- [Train embedding alignment (optional)](#train-embedding-alignment-optional)
+- [Step by step](#step-by-step)
+- [Ensembles (N > 1)](#ensembles-n--1)
 - [Tests](#tests)
 - [Repository layout](#repository-layout)
 
@@ -68,9 +65,6 @@ No single anomaly detector wins across heterogeneous time series, so automated s
 | **L1** — must run the whole detector pool (expensive on long series / large pools) | Ensembling, model generation | Runs only the 1 (or *N*) selected detector(s) |
 | **L2** — must be retrained when the detector pool changes | Trained selectors (classification / regression) | Non-parametric: just update the performance table |
 | **L3** — generalizes poorly under domain shift | Trained selectors | Retrieval in a semantically aligned TSFM space |
-
-> [!NOTE]
-> "Training-free" refers to the **selector**. (i) Like any supervised selector, RAMSAD needs a labeled knowledge base to compute detector performance, but **no labels for the query**. (ii) The optional alignment module is trained offline, never sees detector identities or performance, and queries need **no description**. (iii) A frozen, off-the-shelf TSFM without alignment already outperforms all trained selectors.
 
 ## How it works
 
@@ -172,340 +166,118 @@ Because the full performance profile is averaged, a detector is chosen only if i
 
 ---
 
-## Quick start
+## Quick start (one-button run)
 
-> [!IMPORTANT]
-> Run the full pipelines end-to-end via the provided bash scripts for ID and OOD:
->
-> ```bash
-> # In-distribution (ID) run (sets RAMSAD_DATA_ROOT=data/processed_data and defaults perf CSVs under data/raw/VUS/)
-> bash scripts/run_full_pipeline_id_k1_k10.sh
->
-> # Out-of-distribution (OOD) run (example domain: medical)
-> RAMSAD_OOD_DOMAIN=medical bash scripts/run_full_pipeline_ood_k1_k10.sh
-> ```
->
-> Each driver creates `.venv`, builds segments, embeds descriptions and series, trains the alignment heads, retrieves, and runs model selection for `k = 1 … 10`. Results land in `outputs/full_pipeline_<split>_<stamp>/eval_k/k*/model_selection_k*.csv`.
+Reproduce the paper's single-detector results with one command per setting:
 
-### Reproducing the paper numbers
+```bash
+git clone https://github.com/Hendrix8/RAMSAD.git && cd RAMSAD
 
-Expected mean VUS-PR (single detector, N = 1) from a clean run of the two drivers, against the paper's appendix tables. Small differences come from alignment training and GPU non-determinism.
+# In-distribution: knowledge base = 619 TSB-AD train series, queries = 251 test series
+bash scripts/run_full_pipeline_id_k1_k10.sh
 
-| Setting | k = 1 | k = 3 | k = 6 (default) | k = 10 | Paper (k = 6) |
-|---|---|---|---|---|---|
-| ID, aligned Chronos-2 (`run_full_pipeline_id_k1_k10.sh`) | 0.714 | 0.731 | **0.742** | 0.720 | 0.738 |
-| ID, plain Chronos-2 (`retrieve.mode=chronos`) | – | 0.717 | **0.744** | 0.713 | 0.746 |
-| OOD, aligned Chronos-2, all 9 domains (`RAMSAD_OOD_DOMAIN=all`) | 0.517 | 0.568 | **0.580** | 0.595 | 0.582 |
+# Out-of-distribution: each of the 9 domains is held out in turn
+bash scripts/run_full_pipeline_ood_k1_k10.sh
+```
 
-Oracle: 0.866 (ID), 0.853 (OOD). On two Quadro RTX 6000 GPUs, the ID driver takes about 10 minutes and the full OOD sweep about 45 minutes, since it trains alignment once per held-out domain.
+Each script creates a `.venv`, installs RAMSAD, builds the segments, embeds them, trains the alignment heads, retrieves neighbours and selects detectors for every *k* from 1 to 10. It ends by printing the mean VUS-PR per *k*; the detector chosen for each series is in `outputs/full_pipeline_*/eval_k/k*/model_selection_k*.csv`. On two Quadro RTX 6000 GPUs the ID run takes about 10 minutes and the OOD run about 45.
 
-> [!NOTE]
-> RAMSAD **selects** the ensemble (`select.n=N`), but scoring an ensemble requires running the *N* selected detectors on the raw series and combining their anomaly scores (e.g. with [TSB-AD](https://github.com/TheDatumOrg/TSB-AD)). The performance table only holds per-detector VUS-PR, so ensemble VUS-PR (the "RAMSAD (ens.)" results) cannot be computed from this repository alone.
-
-OOD domains: `environment`, `facility`, `finance`, `humanactivity`, `medical`, `sensor`, `synthetic`, `traffic`, `webservice`. Use `RAMSAD_OOD_DOMAIN=all` to run every domain in turn and get the aggregated OOD score.
-
-### ID vs. OOD: same pipeline, different files
-
-The OOD experiment runs **exactly the same pipeline** as ID; only the input files change:
-
-| | Knowledge base (train files) | Queries (test files) | Alignment trained on |
-|---|---|---|---|
-| **ID** | 619 TSB-AD train series (`data/raw/VUS/train.csv`) | 251 TSB-AD test series (`data/raw/VUS/test.csv`) | the knowledge base |
-| **OOD** (domain *D*) | all 870 series **except** domain *D* (`ood/OOD_D/train_*`, `train_perf_OOD_D.csv`) | all series **of** domain *D* (`ood/OOD_D/test_*`, `test_perf_OOD_D.csv`) | the knowledge base (domain *D* never seen) |
-
-For OOD, the ID train and test series are pooled and each domain is held out in turn (leave-one-domain-out), so across the 9 domains every one of the 870 series is queried once. The target domain is absent from the knowledge base, from the performance table, and from alignment training, and nothing is retrained for it. The OOD driver switches all of these files automatically; with Hydra, `data=ood data.ood_domain=<D>` does the same for embedding, retrieval, and selection.
+- **GPU:** prefix the command with `INSTALL_CUDA124=1` to install PyTorch with CUDA 12.4.
+- **One OOD domain:** `RAMSAD_OOD_DOMAIN=medical bash scripts/run_full_pipeline_ood_k1_k10.sh`. Domains: `environment`, `facility`, `finance`, `humanactivity`, `medical`, `sensor`, `synthetic`, `traffic`, `webservice`.
+- **Re-runs:** segments that already exist are reused. The script headers list `SKIP_*` switches for the other steps.
 
 ## Install
 
+To use RAMSAD step by step instead of through the scripts:
+
 ```bash
-git clone git@github.com:Hendrix8/RAMSAD.git && cd RAMSAD
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-`[dev]` pulls in `sentence-transformers` for tests and for `ramsad-embed-desc`. For a minimal install use `pip install -e "."` and `pip install -e ".[desc]"` only when you need description embeddings.
+For a GPU, add the PyTorch index for your CUDA version ([pick it here](https://pytorch.org/get-started/locally/)), e.g. `pip install -e ".[dev,cuda124]" --extra-index-url https://download.pytorch.org/whl/cu124`.
 
-Core embedding for time series uses `chronos-forecasting` and PyTorch (CUDA optional).
-
-### PyTorch with NVIDIA GPU (CUDA)
-
-CUDA builds are published on PyTorch's package index, not on PyPI alone. After [choosing a CUDA version](https://pytorch.org/get-started/locally/) that matches your driver, install ramsad like this (example: **CUDA 12.4**):
-
-```bash
-pip install -e ".[dev,cuda124]" --extra-index-url https://download.pytorch.org/whl/cu124
-```
-
-For another CUDA tag (`cu121`, `cu126`, …), use the same `--extra-index-url` URL PyTorch shows for that stack, and either keep `cuda124` (only re-resolves `torch`) or install `torch`/`torchvision` first with their command, then `pip install -e ".[dev]"`.
-
-If PyTorch was already installed from PyPI, **reinstall** it with the extra index so the wheel is replaced:
-
-```bash
-pip install --upgrade torch --index-url https://download.pytorch.org/whl/cu124
-pip install -e ".[dev]"
-```
-
-### Optional extras
-
-| Extra | Adds |
+| Extra | Needed for |
 |---|---|
-| *(base)* | Chronos + `torch`, Hydra, pandas, pyarrow |
-| `[dev]` | pytest, ruff, `sentence-transformers` |
-| `[desc]` | MPNet for `ramsad-embed-desc` |
-| `[alignment]` | alignment training + viz + `sentence-transformers` |
-| `[cuda124]` | re-resolves `torch` — use with `--extra-index-url` (see above) |
+| `[dev]` | tests, description embeddings |
+| `[alignment]` | training the alignment heads |
+| `[ensemble]` | scoring ensembles ([TSB-AD](https://github.com/TheDatumOrg/TSB-AD) detectors and VUS-PR) |
 
-Example: `pip install -e ".[dev,alignment,cuda124]" --extra-index-url https://download.pytorch.org/whl/cu124`.
+## Step by step
 
-### Console entrypoints
-
-With an activated venv: `ramsad-pipeline`, `ramsad-embed`, `ramsad-embed-desc`, `ramsad-retrieve`, `ramsad-select`, `ramsad-train-alignment`, `generate_segments` — same as `python -m ramsad.run_*` for RAMSAD stages and `python -m ramsad.generate_segments` for segment generation.
-
-## Data
-
-### Layout
-
-| Path | Role |
-|------|------|
-| [`data/raw/VUS/train.csv`](data/raw/VUS/train.csv), [`data/raw/VUS/test.csv`](data/raw/VUS/test.csv) | Default **performance** tables (VUS-PR per model, `file` column + numeric model columns). Used by Hydra ID config (`src/ramsad/conf/data/id.yaml`) and by the full-pipeline scripts (`TRAIN_CSV` / `TEST_CSV`). Override with env vars when calling the scripts. |
-| `data/raw/Train/`, `data/raw/Test/` | **Raw** univariate series CSVs (619 train / 251 test, from TSB-AD) referenced by the `file` column. Pass `--raw-root /path/to/data/raw` (parent of `Train/` and `Test/`) to segment generation. |
-| [`data/raw/descriptions.csv`](data/raw/descriptions.csv) | Optional `source,description` metadata (one textual description per source dataset); full-pipeline scripts default `DESCRIPTIONS_CSV` here. |
-| `data/processed_data/` | **Generated** segment and series parquets (`id/`, `ood/`, …). Default `RAMSAD_DATA_ROOT` for `scripts/run_full_pipeline_*`; listed in `.gitignore`. |
-
-OOD splits pool the ID train and test series and hold out one domain at a time (see [ID vs. OOD](#id-vs-ood-same-pipeline-different-files)). OOD **Hydra** configs expect leave-domain-out artifacts under `${RAMSAD_DATA_ROOT}/ood/…` (see `src/ramsad/conf/data/ood.yaml`): segment parquets in `ood/OOD_<domain>/` and perf CSVs in `ood/Datasets/OOD/`.
-
-### Environment variables
-
-Paths resolve from the **current working directory** unless you use absolute paths or env overrides.
+The data RAMSAD needs ships in `data/raw/`: the raw TSB-AD series (`Train/`, `Test/`), the VUS-PR of every detector on every series (`VUS/train.csv`, `VUS/test.csv`) and a text description per source dataset (`descriptions.csv`).
 
 ```bash
-# Where segment/series parquets live (id/, ood/). Full-pipeline scripts export:
-#   RAMSAD_DATA_ROOT=$REPO/data/processed_data
-export RAMSAD_DATA_ROOT=/path/to/data/processed_data
+export RAMSAD_DATA_ROOT=$PWD/data/processed_data   # where generated files go
 
-# Hydra default if unset: ./data/splits (see src/ramsad/conf/paths/default.yaml).
-# For this repo's layout, keep RAMSAD_DATA_ROOT pointing at processed_data so ramsad,
-# alignment training, and retrieval agree.
+# 1. Cut every series into segments (once)
+generate_segments --id --train-csv data/raw/VUS/train.csv --test-csv data/raw/VUS/test.csv \
+    --data-root "$RAMSAD_DATA_ROOT" --raw-root "$PWD/data/raw" --descriptions-csv data/raw/descriptions.csv
 
-export RAMSAD_OUTPUTS_ROOT=/path/to/outputs   # optional; default ./outputs
+# 2. Embed with Chronos-2, retrieve the nearest series, select the detector
+ramsad-pipeline experiment=paper_id_single
 ```
 
-### Generate segment parquets
+The result is `model_selection.csv` in the run folder (`outputs/<date>/<time>/`, printed in the log): one row per query series with the chosen detector (`selected_model`) and the top-*N* list (`selected_models`).
 
-From performance CSVs and raw AD CSVs:
+For OOD, build the leave-one-domain-out splits with `generate_segments --ood --domains auto` (same other arguments), then run `ramsad-pipeline experiment=paper_ood_single data.ood_domain=medical`.
 
-```bash
-export RAMSAD_DATA_ROOT="$PWD/data/processed_data"
+Settings are changed on the command line as `key=value`:
 
-generate_segments --id \
-  --train-csv data/raw/VUS/train.csv \
-  --test-csv data/raw/VUS/test.csv \
-  --data-root "$RAMSAD_DATA_ROOT" \
-  --raw-root "$PWD/data/raw"
-```
+| Setting | Default | What it does |
+|---|---|---|
+| `select.k` | `6` | number of retrieved neighbours whose detector scores are averaged (at most `retrieve.top_k`, 10) |
+| `select.n` | `1` | number of detectors to return; `N > 1` selects an ensemble (see below) |
+| `retrieve.mode` | `chronos` | `chronos` = plain Chronos-2 embeddings; `alignment` = aligned embeddings (train them first, below) |
+| `data.ood_domain` | `sensor` | held-out domain for OOD runs |
+| `pipeline.skip_embed` | `false` | reuse embeddings already stored in the segment files |
 
-`--raw-root` must contain `Train/` and `Test/` folders whose files match the `file` column. Outputs include:
-
-- `$RAMSAD_DATA_ROOT/id/train_segments.parquet`
-- `$RAMSAD_DATA_ROOT/id/test_segments.parquet`
-- `$RAMSAD_DATA_ROOT/id/train_series.parquet`
-- `$RAMSAD_DATA_ROOT/id/test_series.parquet`
-
-For OOD (refresh ID, then build leave-domain-out splits):
-
-```bash
-generate_segments --ood \
-  --train-csv data/raw/VUS/train.csv \
-  --test-csv data/raw/VUS/test.csv \
-  --data-root "$RAMSAD_DATA_ROOT" \
-  --raw-root "$PWD/data/raw" \
-  --domains auto
-```
-
-If you omit `--descriptions-csv`, the tool looks for `<data-root>/descriptions.csv`; the bash drivers pass `data/raw/descriptions.csv` explicitly.
-
-Use `--domains sensor,medical` to restrict OOD domains. Existing outputs are skipped unless `--force` is passed.
-
-Standalone OOD layout from ID parquets + perf CSVs only:
-
-```bash
-python scripts/build_ood_splits_from_id.py \
-  --id-root "$RAMSAD_DATA_ROOT/id" \
-  --out-root "$RAMSAD_DATA_ROOT/ood" \
-  --train-csv data/raw/VUS/train.csv \
-  --test-csv data/raw/VUS/test.csv
-```
+The stages can also be run one at a time: `ramsad-embed`, `ramsad-retrieve`, `ramsad-select`.
 
 <details>
-<summary><b>OOD segment / series parquets (reference)</b></summary>
-
-Hydra expects the following files for each domain `DOMAIN` (e.g. `sensor`), under **`${RAMSAD_DATA_ROOT}/ood/`**:
-
-- `OOD_${DOMAIN}/train_segments_OOD_${DOMAIN}.parquet`
-- `OOD_${DOMAIN}/test_segments_OOD_${DOMAIN}.parquet`
-- `OOD_${DOMAIN}/train_series_OOD_${DOMAIN}.parquet`
-- `OOD_${DOMAIN}/test_series_OOD_${DOMAIN}.parquet`
-- `Datasets/OOD/train_perf_OOD_${DOMAIN}.csv`, `test_perf_OOD_${DOMAIN}.csv`
-
-**Generate from ID:** use `generate_segments --ood` or [`scripts/build_ood_splits_from_id.py`](scripts/build_ood_splits_from_id.py) (see above).
-
-Regenerate `*_series_*.parquet` from segments if needed:
+<summary><b>Aligned similarity space (optional, mainly helps OOD)</b></summary>
 
 ```bash
-python scripts/build_series_parquets_from_segments.py \
-  --train-segments "$RAMSAD_DATA_ROOT/ood/OOD_sensor/train_segments_OOD_sensor.parquet" \
-  --test-segments "$RAMSAD_DATA_ROOT/ood/OOD_sensor/test_segments_OOD_sensor.parquet" \
-  --out-train-series "$RAMSAD_DATA_ROOT/ood/OOD_sensor/train_series_OOD_sensor.parquet" \
-  --out-test-series "$RAMSAD_DATA_ROOT/ood/OOD_sensor/test_series_OOD_sensor.parquet"
+pip install -e ".[alignment]"
+ramsad-embed-desc data=id                                   # embed the dataset descriptions (MPNet)
+ramsad-embed experiment=paper_id_single                     # embed the series (Chronos-2)
+ramsad-train-alignment data.desc_emb_col=all-mpnet-base-v2_desc
+ramsad-pipeline experiment=paper_id_single pipeline.skip_embed=true retrieve.mode=alignment
 ```
+
+Training writes to `outputs/alignment/run-*`; retrieval uses the newest run unless you pass `retrieve.alignment_run_dir=<run folder>`. Training settings live in `alignment/config/` (e.g. `ramsad-train-alignment training.batch_size=256`).
 
 </details>
 
-## Run (Hydra)
+## Ensembles (N > 1)
 
-From your **project directory** (any cwd you choose; relative paths resolve from there). Set `RAMSAD_DATA_ROOT` first so data paths match [`src/ramsad/conf/data/id.yaml`](src/ramsad/conf/data/id.yaml) (perf CSVs under `data/raw/VUS/` relative to the repo).
-
-**Full pipeline** (embed → retrieve → select), OOD example:
+RAMSAD can recommend several detectors instead of one. Ensemble scoring is the average of the selected detectors' anomaly scores, each min-max normalised to [0, 1]; this is the "RAMSAD (ens.)" setting in the paper.
 
 ```bash
-python -m ramsad.run_pipeline experiment=paper_ood_single
+pip install -e ".[ensemble]"
+
+# 1. Select the top-10 detectors for each series
+ramsad-pipeline experiment=paper_id_single select.n=10
+
+# 2. Run them and combine their scores
+ramsad-ensemble ensemble.selection_csv=outputs/<date>/<time>/model_selection.csv \
+    ensemble.scores_dir=data/scores ensemble.run_missing=true
 ```
 
-ID example:
+`ramsad-ensemble` looks for each detector's scores in `<scores_dir>/<Detector>/<series>.npy` (TSB-AD names, e.g. `Sub_PCA`, `MOMENT_FT`), so a folder of TSB-AD benchmark scores works as is. With `ensemble.run_missing=true` a missing score is computed with TSB-AD's tuned hyperparameters and saved there for next time. The run folder gets `ensemble_results.csv` (detectors used and VUS-PR per series) and the ensemble scores in `ensemble_scores/`. For unlabeled series, add `ensemble.evaluate=false`.
 
-```bash
-python -m ramsad.run_pipeline experiment=paper_id_single
+To combine scores you already have:
+
+```python
+from ramsad.ensemble import combine_scores
+ensemble_score = combine_scores([score_a, score_b, score_c])
 ```
-
-**Stages only:**
-
-```bash
-python -m ramsad.run_embed        # Chronos-2 segment embeddings
-python -m ramsad.run_embed_desc   # MPNet description embeddings
-python -m ramsad.run_retrieve     # segment retrieval + segment-to-series aggregation
-python -m ramsad.run_select       # mean-VUS argmax over the top-k neighbors
-```
-
-Or: `ramsad-embed`, `ramsad-embed-desc`, … if the venv is on `PATH`.
-
-### Useful overrides
-
-- OOD domain: `data.ood_domain=medical`
-- Skip Chronos embed if parquets already have `amazon_chronos-2`: `pipeline.skip_embed=true`
-- **Description embeddings (MPNet)** on train/test segment parquets: `pipeline.embed_desc=true` or run `python -m ramsad.run_embed_desc` (defaults: `embed_desc.text_column=desc`, `embed_desc.out_column=all-mpnet-base-v2_desc`; use `data=id` / `data=ood` like the main pipeline). Install: `pip install -e ".[desc]"` (or `[dev]`).
-- Neighbor count for selection: `select.k=6` (default, as in the paper; must be ≤ `retrieve.top_k`, default 10).
-- Number of selected detectors: `select.n=1` (default). With `select.n=N>1`, the output's `selected_models` column lists the top-*N* detectors by neighbor mean VUS (`;`-separated), which you then run and combine as an ensemble. `selected_model` is always the top-1 detector. To reuse one retrieval CSV for many `k`, set `select.retrieval_csv=/abs/path/to/retrieval_topk.csv` (see `scripts/run_full_pipeline_id_k1_k10.sh` and `scripts/run_full_pipeline_ood_k1_k10.sh`).
-- **Alignment retrieval**: see [Alignment retrieval paths](#alignment-retrieval-paths) below.
-
-Outputs go to Hydra's run directory under **`paths.outputs_root`** (default `./outputs`; see console log for the resolved `output_dir`).
-
-Configs under `src/ramsad/conf/experiment/` include `noop` (default), `paper_ood_single`, `paper_id_single`, and `paper_ood_full` (comments show a bash loop for all nine OOD domains).
-
-### One-shot driver (`k = 1 … 10`)
-
-The ID and OOD drivers create `.venv`, install `.[dev,alignment]` (optional **`INSTALL_CUDA124=1`** for the PyTorch CUDA index), run **segment generation → desc embeddings → Chronos → alignment training → aligned retrieval** (`top_k=10`), then **model selection** for **`k = 1` through `10`** into `outputs/full_pipeline_<split>_<stamp>/eval_k/k*/model_selection_k*.csv` (same retrieval CSV for all `k`). Segment generation is skipped automatically when the required parquets already exist; set `FORCE_SEGMENTS=1` to rebuild. See the script headers for **`TRAIN_CSV`**, **`TEST_CSV`**, **`RAW_ROOT`**, **`DESCRIPTIONS_CSV`**, **`SKIP_*`**, and **`RET_CSV_OVERRIDE`**.
-
-```bash
-bash scripts/run_full_pipeline_id_k1_k10.sh
-RAMSAD_OOD_DOMAIN=medical bash scripts/run_full_pipeline_ood_k1_k10.sh
-INSTALL_CUDA124=1 bash scripts/run_full_pipeline_id_k1_k10.sh
-```
-
-For a fresh data build from raw CSVs:
-
-```bash
-RAW_ROOT=/path/to/data/raw FORCE_SEGMENTS=1 bash scripts/run_full_pipeline_id_k1_k10.sh
-RAW_ROOT=/path/to/data/raw FORCE_SEGMENTS=1 RAMSAD_OOD_DOMAIN=sensor bash scripts/run_full_pipeline_ood_k1_k10.sh
-```
-
-### K-sweep evaluation
-
-After selection, `scripts/evaluate_k_sweep.py` and `scripts/evaluate_all_ood_k_sweep.py` compare chosen models to oracle VUS on the test perf CSV. The summary CSV columns include **`N_series`** (number of test series scored, i.e. matched rows—not "number of benchmark datasets").
-
-## Description embeddings (`all-mpnet-base-v2_desc`)
-
-Segment parquets need a text column (default **`desc`**) and store description-side vectors in a column such as **`all-mpnet-base-v2_desc`** (768-d lists, same style as Chronos columns). Pre-built segments may only have **`all-mpnet-base-v2_class`** until you run this step.
-
-**Standalone** (uses `conf/embed_desc.yaml`, default `data=id`):
-
-```bash
-python -m ramsad.run_embed_desc
-python -m ramsad.run_embed_desc data=ood data.ood_domain=sensor
-```
-
-**Inside the full pipeline** (before Chronos embed):
-
-```bash
-python -m ramsad.run_pipeline experiment=paper_id_single pipeline.embed_desc=true
-```
-
-**Overrides:** e.g. `embed_desc.text_column=Description embed_desc.out_column=all-mpnet-base-v2_desc embed_desc.device=cpu`
-
-After writing **`all-mpnet-base-v2_desc`**, point alignment training at it: `ramsad-train-alignment data.desc_emb_col=all-mpnet-base-v2_desc`.
-
-## Alignment retrieval paths
-
-`retrieve.mode=alignment` loads **`checkpoints/best_model.pt`** and **`config.yaml`**.
-
-**Defaults** (relative to **cwd**; same roots as `paths.outputs_root`, default `./outputs` or `RAMSAD_OUTPUTS_ROOT`):
-
-- `retrieve.alignment_run_dir=${paths.outputs_root}/alignment` — must match where alignment training writes (see `alignment/config/config.yaml` `output_dir`).
-- `retrieve.alignment_emb_column=emb_aligned` — in-memory column name for projected vectors.
-
-If `alignment_run_dir` points at that **base** folder and there is **no** `best_model.pt` directly inside it, retrieval **automatically picks the newest** immediate subfolder (e.g. `run-20260430-021630-infonce`) that contains `checkpoints/best_model.pt`. You can still override with the exact inner `run-...` path.
-
-1. **Train** (see next section). The log prints **`Output directory:`** — that folder always works if passed explicitly. Do **not** pass the ramsad **pipeline** Hydra folder (e.g. `outputs/2026-04-30/02-16-29` from `run_pipeline`); that job does not contain an alignment checkpoint.
-
-2. **Minimal alignment run** (defaults):
-
-   ```bash
-   python -m ramsad.run_pipeline experiment=paper_id_single retrieve.mode=alignment
-   ```
-
-3. **Overrides:** set `retrieve.alignment_run_dir=...` to another base or a specific `run-...` folder; set `retrieve.alignment_emb_column=...` if you want a different column name.
-
-4. **`retrieve.alignment_source_column`:** Chronos column to project; default `auto` uses `embed.embed_column` (e.g. `amazon_chronos-2`).
-
-5. **GPU:** If PyTorch warns about an old NVIDIA driver, projection may use **CPU**; set `retrieve.alignment_device=cpu` to force CPU.
-
-## Train embedding alignment (optional)
-
-The vendored trainer lives under `alignment/` (Hydra). From your **project directory**, install extra deps and run:
-
-```bash
-pip install -e ".[dev,alignment]"
-ramsad-train-alignment   # same as: python alignment/train.py
-```
-
-[`alignment/config/data/default.yaml`](alignment/config/data/default.yaml) defaults use **`${RAMSAD_DATA_ROOT:-data/processed_data}/id/train_segments.parquet`** for segments and **`data/raw/VUS/train.csv`** for `performance_file` (Series-to-Performance alignment). Bundled or freshly built segments may include **`all-mpnet-base-v2_class`** only until you run [description embedding](#description-embeddings-all-mpnet-base-v2_desc); then use `data.desc_emb_col=all-mpnet-base-v2_desc`. Training writes under `./outputs/alignment/run-...` by default, or `$RAMSAD_OUTPUTS_ROOT/alignment/run-...` if set (see **`Output directory:`** in the log). Retrieval uses the same base (`paths.outputs_root/alignment`) and selects the **newest** run unless you override `retrieve.alignment_run_dir`.
-
-Contrastive alignment between time-series embeddings (e.g. Chronos) and description embeddings. Layout:
-
-```
-alignment/
-├── config/           # Hydra: config.yaml, data/, model/, training/
-├── data/dataset.py
-├── model/embedding_alignment.py
-├── trainer/trainer.py
-├── utils/
-└── train.py          # Main entry (also: ramsad-train-alignment)
-```
-
-Override examples:
-
-```bash
-python alignment/train.py training.batch_size=256 data.desc_emb_col=all-mpnet-base-v2_desc
-python alignment/train.py model=large training=fast
-```
-
-Checkpoints and logs go under `${RAMSAD_OUTPUTS_ROOT:-./outputs}/alignment/run-*` (exact path printed as **`Output directory:`**).
 
 ## Tests
 
 ```bash
 pytest -q
 ```
-
-(Embedding is not exercised in CI tests; retrieve/select use small synthetic parquets.)
 
 ## Repository layout
 
@@ -516,19 +288,16 @@ pytest -q
 │   ├── embed_desc.py        # MPNet description embeddings
 │   ├── retrieve.py          # segment retrieval + segment-to-series aggregation
 │   ├── select.py            # mean-VUS argmax model selection
+│   ├── ensemble.py          # score top-N ensembles (min-max + mean), VUS-PR
 │   ├── alignment_projector.py
 │   ├── generate_segments.py
-│   └── conf/                # config.yaml, data/, embed/, retrieve/, select/, experiment/, …
-├── alignment/           # Chronos↔description alignment trainer (train.py, model/, trainer/, …)
-├── scripts/             # run_full_pipeline_*, evaluate_k_sweep.py, evaluate_all_ood_k_sweep.py,
-│                        # build_ood_splits_from_id.py, build_series_parquets_from_segments.py
-├── data/raw/            # performance CSVs (VUS/), raw series (Train/, Test/), descriptions.csv
-├── data/processed_data/ # generated parquets (gitignored)
+│   └── conf/                # Hydra configs
+├── alignment/           # Chronos↔description alignment trainer
+├── scripts/             # one-command drivers and k-sweep evaluation
+├── data/raw/            # performance tables (VUS/), raw series (Train/, Test/), descriptions.csv
 ├── tests/
 └── assets/              # README figures (from the paper)
 ```
-
-Raw inputs under **`data/raw/`** are tracked; **`data/processed_data/`** holds regenerated artifacts and is **gitignored**. Runtime dirs such as `.venv/`, `outputs/`, `multirun/`, `__pycache__/`, and `.pytest_cache/` should not be committed.
 
 ## Acknowledgements
 
