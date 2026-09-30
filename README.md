@@ -34,6 +34,7 @@
 - [Why RAMSAD?](#why-ramsad)
 - [How it works](#how-it-works)
 - [Results](#results)
+- [Explainability](#explainability)
 - [Quick start (one-button run)](#quick-start-one-button-run)
 - [Install](#install)
 - [Step by step](#step-by-step)
@@ -101,11 +102,7 @@ No single anomaly detector wins across heterogeneous time series, so automated s
 </tr>
 </table>
 
-Because the full performance profile is averaged, a detector is chosen only if it is broadly strong across the neighborhood — neighbors do not have to agree on their individual best detector:
-
-<p align="center">
-  <img src="assets/explanation_example.png" width="90%" alt="Example of a RAMSAD decision"/>
-</p>
+Because the full performance profile is averaged, a detector is chosen only if it is broadly strong across the neighborhood — neighbors do not have to agree on their individual best detector (see [Explainability](#explainability) for a worked example).
 
 <details>
 <summary><b>Semantic alignment details</b></summary>
@@ -163,6 +160,26 @@ Because the full performance profile is averaged, a detector is chosen only if i
 <p align="center">
   <img src="assets/kb_pool_sensitivity.png" width="60%" alt="Knowledge base and detector pool reduction"/>
 </p>
+
+## Explainability
+
+Every RAMSAD recommendation can be traced back to concrete evidence: the retrieved neighbor series, their datasets, and how every detector performed on them.
+
+**Worked example.** An out-of-distribution query from the *Sensor* domain. Its four nearest neighbors come from the *Medical* and *WebService* domains (aggregation scores 0.3985, 0.4305, 0.4519, 0.4526). Their individual best detectors disagree: two favor `KShapeAD`, the others `MOMENT (FT)` and `CNN`. RAMSAD does not take a majority vote; it averages the full VUS-PR profile of all 32 detectors over the neighbors, and that average peaks at `KShapeAD`, which is selected.
+
+<p align="center">
+  <img src="assets/explanation_example.png" width="90%" alt="Query, its four retrieved neighbors, their VUS-PR profiles and the averaged profile"/>
+</p>
+<p align="center"><em>The query, its top-4 neighbors, each neighbor's VUS-PR over the 32 detectors (hatched bar: its best detector), and the averaged profile, which peaks at KShapeAD.</em></p>
+
+**Natural-language explanations with ChatTS.** Because the evidence is explicit, it can be handed to a time-series language model to write a rationale. [ChatTS](https://github.com/NetManAIOps/ChatTS) receives (i) the query series, (ii) the retrieved neighbors, (iii) the dataset descriptions of the query and neighbors, (iv) the retrieval metadata (rank and aggregation score), (v) each neighbor's best detector and its VUS-PR, and (vi) a short description of the selected detector. It returns a concise explanation. This step is purely explanatory: it does not change RAMSAD's prediction.
+
+<p align="center">
+  <img src="assets/explanation_chatts.png" width="90%" alt="ChatTS prompt structure and generated explanation"/>
+</p>
+<p align="center"><em>ChatTS explanation for the example above.</em></p>
+
+In this example, ChatTS explains that `KShapeAD` is chosen because it has the strongest average VUS-PR over the neighbors, especially on the *Medical* series, which are the closest matches to the query and share its periodic structure. The explanation also links this to how the detector works: it models normal patterns with k-Shape clustering and scores deviations from them.
 
 ---
 
