@@ -27,6 +27,7 @@
 #   SKIP_EVAL         set to 1 (skip k=1..K_MAX selection)
 #   ALIGN_DESC_COL    data.desc_emb_col for alignment (default all-mpnet-base-v2_desc)
 #   K_MAX             default 10 (retrieval top_k and max k for selection)
+#   SELECT_N          number of detectors to select per series (default 1; N>1 = ensemble)
 #   RUN_ROOT          output folder; default outputs/full_pipeline_<UTC stamp>
 
 set -euo pipefail
@@ -52,6 +53,7 @@ RAMSAD_SPLIT=id
 : "${OOD_DOMAINS:=${RAMSAD_OOD_DOMAIN}}"
 : "${ALIGN_DESC_COL:=all-mpnet-base-v2_desc}"
 : "${K_MAX:=10}"
+: "${SELECT_N:=1}"
 : "${RET_CSV_OVERRIDE:=}"
 : "${TRAIN_CSV:=data/raw/VUS/train.csv}"
 : "${TEST_CSV:=data/raw/VUS/test.csv}"
@@ -205,6 +207,7 @@ if [[ "${SKIP_EVAL}" != "1" ]]; then
     echo "--- select k=${k} ---"
     "$PY" -m ramsad.run_select "${EXP[@]}" \
       "select.k=${k}" \
+      "select.n=${SELECT_N}" \
       "select.retrieval_csv=${RET_CSV_ABS}" \
       "select.output_csv_name=model_selection_k${k}.csv" \
       hydra.run.dir="$RUN_ROOT/eval_k/k${k}"

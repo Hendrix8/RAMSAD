@@ -200,6 +200,7 @@ bash scripts/run_full_pipeline_ood_k1_k10.sh
 Each script creates a `.venv`, installs RAMSAD, builds the segments, embeds them, trains the alignment heads, retrieves neighbours and selects detectors for every *k* from 1 to 10. It ends by printing the mean VUS-PR per *k*; the detector chosen for each series is in `outputs/full_pipeline_*/eval_k/k*/model_selection_k*.csv`. On two Quadro RTX 6000 GPUs the ID run takes about 10 minutes and the OOD run about 45.
 
 - **GPU:** prefix the command with `INSTALL_CUDA124=1` to install PyTorch with CUDA 12.4.
+- **Ensembles and k:** `SELECT_N=10` selects the top-10 detectors per series instead of one; `K_MAX=10` sets the largest number of neighbours *k* (every *k* from 1 to `K_MAX` is run). Example: `SELECT_N=10 bash scripts/run_full_pipeline_id_k1_k10.sh`.
 - **One OOD domain:** `RAMSAD_OOD_DOMAIN=medical bash scripts/run_full_pipeline_ood_k1_k10.sh`. Domains: `environment`, `facility`, `finance`, `humanactivity`, `medical`, `sensor`, `synthetic`, `traffic`, `webservice`.
 - **Re-runs:** segments that already exist are reused. The script headers list `SKIP_*` switches for the other steps.
 
@@ -318,7 +319,7 @@ pytest -q
 
 ## Acknowledgements
 
-Supported by DataGEMS (101188416). This work was granted access to the HPC resources of IDRIS under the allocation 2025-A0191012641 made by GENCI. The benchmark data and detector pool come from [TSB-AD](https://github.com/TheDatumOrg/TSB-AD); time-series embeddings use [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
+Supported by DataGEMS (101188416). This work was granted access to the HPC resources of IDRIS under the allocations 2025-A0191012641 and 2025-AD011016632 made by GENCI. The benchmark data and detector pool come from [TSB-AD](https://github.com/TheDatumOrg/TSB-AD); time-series embeddings use [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
 ## License
 

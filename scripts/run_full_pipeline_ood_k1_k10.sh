@@ -31,6 +31,7 @@ RAMSAD_SPLIT=ood
 : "${OOD_DOMAINS:=${RAMSAD_OOD_DOMAIN}}"
 : "${ALIGN_DESC_COL:=all-mpnet-base-v2_desc}"
 : "${K_MAX:=10}"
+: "${SELECT_N:=1}"
 : "${RET_CSV_OVERRIDE:=}"
 : "${TRAIN_CSV:=data/raw/VUS/train.csv}"
 : "${TEST_CSV:=data/raw/VUS/test.csv}"
@@ -249,6 +250,7 @@ if [[ "${SKIP_EVAL}" != "1" ]]; then
     echo "--- select k=${k} ---"
     "$PY" -m ramsad.run_select "${EXP[@]}" \
       "select.k=${k}" \
+      "select.n=${SELECT_N}" \
       "select.retrieval_csv=${RET_CSV_ABS}" \
       "select.output_csv_name=model_selection_k${k}.csv" \
       hydra.run.dir="$RUN_ROOT/eval_k/k${k}"
