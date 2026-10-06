@@ -25,6 +25,8 @@ def main(cfg: DictConfig) -> None:
         decimals=None if decimals is None else int(decimals),
         run_missing=bool(e.run_missing),
         evaluate=bool(e.evaluate),
+        vus_thresholds=int(e.vus_thresholds),
+        vus_window_factor=float(e.vus_window_factor),
         save_scores=bool(e.save_scores),
         verbose=bool(e.get("verbose", True)),
     )

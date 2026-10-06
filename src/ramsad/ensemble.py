@@ -126,16 +126,22 @@ def load_or_run_score(
     return score
 
 
-def vus_pr(score: np.ndarray, labels: np.ndarray, data: np.ndarray) -> float:
-    """VUS-PR with TSB-AD's implementation and sliding window (first series column)."""
+def vus_pr(
+    score: np.ndarray,
+    labels: np.ndarray,
+    data: np.ndarray,
+    thresholds: int = 2000,
+    window_factor: float = 2.0,
+) -> float:
+    """VUS-PR with TSB-AD's implementation; sliding window from the first series column."""
     try:
         from TSB_AD.evaluation.basic_metrics import generate_curve
         from TSB_AD.utils.slidingWindows import find_length_rank
     except ImportError as e:
         raise ImportError('VUS-PR needs TSB-AD: pip install -e ".[ensemble]"') from e
     n = min(len(score), len(labels))
-    window = find_length_rank(data[:, :1], rank=1)
-    return float(generate_curve(labels[:n].astype(int), score[:n], window, "opt", 250)[-1])
+    window = max(1, int(round(find_length_rank(data[:, :1], rank=1) * window_factor)))
+    return float(generate_curve(labels[:n].astype(int), score[:n], window, "opt", thresholds)[-1])
 
 
 def find_series_file(series_dirs: list[Path], series: str) -> Path | None:
@@ -155,6 +161,8 @@ def run_ensemble(
     decimals: int | None = 3,
     run_missing: bool = False,
     evaluate: bool = True,
+    vus_thresholds: int = 2000,
+    vus_window_factor: float = 2.0,
     save_scores: bool = True,
     verbose: bool = True,
 ) -> Path:
@@ -187,7 +195,7 @@ def run_ensemble(
             np.save(score_out / f"{series}.npy", ens)
         row = {"time_series": series, "n_selected": len(models), "n_used": len(used), "models": ";".join(used)}
         if evaluate and labels is not None:
-            row["vus_pr"] = vus_pr(ens, labels, data)
+            row["vus_pr"] = vus_pr(ens, labels, data, vus_thresholds, vus_window_factor)
         rows.append(row)
         if verbose:
             extra = f" VUS-PR={row['vus_pr']:.4f}" if "vus_pr" in row else ""

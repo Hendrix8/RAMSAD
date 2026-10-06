@@ -11,6 +11,8 @@ series_dirs:
 run_missing: false
 # Compute VUS-PR per series when the series has labels (needs TSB-AD).
 evaluate: true
+vus_thresholds: 2000
+vus_window_factor: 2.0
 # Save each ensemble score to <run dir>/ensemble_scores/<series>.npy.
 save_scores: true
 # Rounding applied to the normalised scores and their average (paper runs: 3 for ID, 2 for OOD); null = none.
