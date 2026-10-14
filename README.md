@@ -47,8 +47,8 @@
 ## Highlights
 
 - **Training-free selector.** No meta-learner is fitted: detectors are ranked directly from the performance profiles of retrieved neighbors. Adding or removing a detector from the pool only means adding or removing a column of the performance table — no retraining.
-- **Best single-detector selector in-distribution.** Average VUS-PR **0.74** on the TSB-AD test split vs. **0.68** for the strongest trained selector (SATZilla); best average rank (6.97 vs. 8.90).
-- **Most robust selector out-of-distribution.** Under leave-one-domain-out, RAMSAD drops 17% (to **0.57**) while trained selectors drop 19–20%.
+- **Best single-detector selector in-distribution.** Average VUS-PR **0.74** on the TSB-AD test split vs. **0.69** for the strongest trained selector (SATZilla); best average rank (6.97 vs. 8.90).
+- **Most robust selector out-of-distribution.** Under leave-one-domain-out, RAMSAD drops by 0.16 VUS-PR (to **0.59**) while trained selectors drop by 0.19–0.20.
 - **Cheap ensembles that beat full-pool ensembles.** Selecting the top-*N* detectors (N=10 of 32) reaches **0.77** VUS-PR in ID and exceeds the best full-pool ensemble (OE) in OOD by 2% while being **×4.7 faster**; not statistically different from the Oracle.
 - **Fastest selection.** ~**20 ms** median latency from raw query to recommendation (vs. 39–490 ms for meta-learning selectors), with 0.4 ms std.
 - **Pluggable similarity space.** Works on raw series (Euclidean, DTW), frozen TSFM embeddings (e.g. Chronos-2), or TSFM embeddings semantically aligned with dataset descriptions.
@@ -133,8 +133,8 @@ Because the full performance profile is averaged, a detector is chosen only if i
 
 | Setting | RAMSAD (N=1) | RAMSAD ens. (N=10) | Best trained selector (SATZilla) | Best full-pool ensemble (OE) |
 |---|---|---|---|---|
-| In-distribution | **0.74** | **0.77** | 0.68 | 0.64 |
-| Out-of-distribution | 0.57 | **best** (+2% vs OE, ×4.7 faster) | 0.49 | 0.64 |
+| In-distribution | **0.74** | **0.77** | 0.69 | 0.64 |
+| Out-of-distribution | 0.59 | **best** (+2% vs OE, ×4.7 faster) | 0.50 | 0.65 |
 
 **Accuracy vs. runtime, and sensitivity to *k* and *N*.** RAMSAD is stable across *k* (max variation ≈0.04 in ID, ≤0.07 in OOD for N=1, shrinking as N grows) and always beats SATZilla.
 
