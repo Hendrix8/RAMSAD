@@ -41,6 +41,7 @@
 - [Ensembles (N > 1)](#ensembles-n--1)
 - [Tests](#tests)
 - [Repository layout](#repository-layout)
+- [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -319,7 +320,9 @@ pytest -q
 
 ## Acknowledgements
 
-Supported by DataGEMS (101188416). This work was granted access to the HPC resources of IDRIS under the allocations 2025-A0191012641 and 2025-AD011016632 made by GENCI. The benchmark data and detector pool come from [TSB-AD](https://github.com/TheDatumOrg/TSB-AD); time-series embeddings use [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
+Supported by EU Horizon project DataGEMS (101188416). This work was granted access to the HPC resources of IDRIS under the allocations 2025-A0191012641 and 2025-AD011016632 by GENCI. We thank Azedine Mani, Head of the IT team (UFR Mathématiques et Informatique, Université Paris Cité), for his pivotal role in creating and making available computational resources essential to this work.
+
+The benchmark data and detector pool come from [TSB-AD](https://github.com/TheDatumOrg/TSB-AD); time-series embeddings use [Chronos-2](https://github.com/amazon-science/chronos-forecasting).
 
 ## License
 
